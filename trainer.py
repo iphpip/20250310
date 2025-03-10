@@ -74,7 +74,7 @@ def train_model(model, X_train, y_train, X_val, y_val, model_name):
 def train_meta_model(all_preds, y_train, input_size):
     logger.info("开始训练元模型...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    meta_model = MetaModel(input_size).to(device)
+    meta_model = MetaModel().to(device)
     criterion = nn.BCELoss()
     optimizer = optim.Adam(meta_model.parameters(), lr=config['train']['learning_rate'])
 

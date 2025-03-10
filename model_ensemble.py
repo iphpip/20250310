@@ -9,7 +9,7 @@ from sklearn.linear_model import LogisticRegression
 
 class MetaModel:
     """元学习模型包装器（新增）"""
-    def __init__(self, input_size):
+    def __init__(self):
         self.model = LogisticRegression(max_iter=1000)
     
     def fit(self, X, y):
@@ -134,21 +134,26 @@ def boosting_fusion(all_preds, y_true):
     return final_pred
 
 
-def ensemble_models(all_preds, y_true=None, label_encoder=None, fusion_method='weighted_voting', weights=None):
+def ensemble_models(all_preds, y_true=None, label_encoder=None, fusion_method='weighted_voting', weights=None, attack_types=None, dynamic_update=False):
     """
     模型融合主函数
     :param all_preds: 各个模型的预测结果列表，每个元素是一个 numpy 数组
     :param y_true: 真实标签（仅在使用堆叠融合、Bagging 融合、Boosting 融合时需要）
     :param label_encoder: 标签编码器（仅在使用堆叠融合时需要）
-    :param fusion_method: 融合方法，可选 'weighted_voting'、'stacking'、'bagging'、'boosting'
+    :param fusion_method: 融合方法，可选 'weighted_voting'、'stacking'、'bagging'、'boosting'、'hierarchical'
     :param weights: 加权投票时各个模型的权重列表
+    :param attack_types: 攻击类型列表，用于分层融合
+    :param dynamic_update: 是否动态更新权重
     :return: 融合后的预测结果
     """
+    if dynamic_update:
+        weights = dynamic_weight_adjustment(all_preds, y_true)
+    
     if fusion_method == 'weighted_voting':
         if weights is None:
             weights = [1] * len(all_preds)
         return weighted_voting(all_preds, weights)
-    elif fusion_method =='stacking':
+    elif fusion_method == 'stacking':
         if y_true is None or label_encoder is None:
             raise ValueError("使用堆叠融合时，y_true 和 label_encoder 不能为空")
         return stacking(all_preds, y_true, label_encoder)
@@ -160,5 +165,9 @@ def ensemble_models(all_preds, y_true=None, label_encoder=None, fusion_method='w
         if y_true is None:
             raise ValueError("使用 Boosting 融合时，y_true 不能为空")
         return boosting_fusion(all_preds, y_true)
+    elif fusion_method == 'hierarchical':
+        if y_true is None or attack_types is None:
+            raise ValueError("使用分层融合时，y_true 和 attack_types 不能为空")
+        return hierarchical_fusion(all_preds, y_true, attack_types)
     else:
-        raise ValueError("不支持的融合方法，请选择 'weighted_voting'、'stacking'、'bagging'、'boosting'")
+        raise ValueError("不支持的融合方法，请选择 'weighted_voting'、'stacking'、'bagging'、'boosting'、'hierarchical'")

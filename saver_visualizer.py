@@ -13,7 +13,7 @@ def save_model(model, model_name):
 
 def visualize_results(y_true, y_pred, label_encoder, model_name):
     cm = confusion_matrix(y_true, y_pred)
-    plt.figure(figsize=(10, 8))
+    plt.figure(figsize=(10, 15))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                 xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_)
     plt.xlabel('Predicted Labels')
