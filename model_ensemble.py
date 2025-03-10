@@ -9,7 +9,7 @@ from sklearn.linear_model import LogisticRegression
 
 class MetaModel:
     """元学习模型包装器（新增）"""
-    def __init__(self):
+    def __init__(self, input_size):
         self.model = LogisticRegression(max_iter=1000)
     
     def fit(self, X, y):

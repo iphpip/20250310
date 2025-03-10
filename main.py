@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from data_loader import load_and_preprocess_data
 from data_resampler import resample_data
 from model_builder import build_models
@@ -11,24 +14,20 @@ import os
 import pandas as pd
 import numpy as np
 from config import load_config
-import warnings
-
-warnings.filterwarnings("ignore", category=FutureWarning)
 
 logger = setup_logger()
 config = load_config()
-
-logger = None  # 添加全局变量
 
 def main():
     global logger
     if logger is None:
         logger = setup_logger()
-        
-    (X_train_processed, X_test_processed, 
-     y_train_encoded, y_test_encoded, 
+
+    # 修改数据加载部分
+    (X_train_processed, X_test_processed,
+     y_train_encoded, y_test_encoded,
      label_encoder, attack_types) = load_and_preprocess_data()
-    
+
     X_resampled, y_resampled = resample_data(X_train_processed, y_train_encoded, label_encoder)
 
     input_size = X_resampled.shape[1]
@@ -41,7 +40,7 @@ def main():
     all_probas = []
 
     for model, model_name in zip(models, model_names):
-        model = train_model(model, X_resampled, y_resampled, X_test_processed, y_test_encoded)
+        model = train_model(model, X_resampled, y_resampled, X_test_processed, y_test_encoded, model_name)
         save_model(model, model_name)
 
         pred, proba = test_model(model.__class__, input_size, output_size, model_name, X_test_processed)
@@ -50,14 +49,7 @@ def main():
             all_probas.append(proba)
             visualize_results(y_test_encoded, pred, label_encoder, model_name)
 
-            # 修改为以字典形式接收返回值
-            metrics = calculate_metrics(y_test_encoded, pred, proba, label_encoder)
-            accuracy = metrics['accuracy']
-            recall = metrics['recall']
-            f1 = metrics['f1_score']
-            auc = metrics['auc']
-            log_loss_value = metrics['log_loss']
-
+            accuracy, recall, f1, auc, log_loss_value = calculate_metrics(y_test_encoded, pred, proba, label_encoder)
             logger.info(f"{model_name} - Accuracy: {accuracy:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, AUC: {auc:.4f}, Log Loss: {log_loss_value:.4f}")
 
     # 训练元模型
@@ -91,14 +83,7 @@ def main():
             if method != 'meta_learning':
                 final_proba = sum(all_probas) / len(all_probas)
 
-            # 修改为以字典形式接收返回值
-            metrics = calculate_metrics(y_test_encoded, final_pred, final_proba, label_encoder)
-            accuracy = metrics['accuracy']
-            recall = metrics['recall']
-            f1 = metrics['f1_score']
-            auc = metrics['auc']
-            log_loss_value = metrics['log_loss']
-
+            accuracy, recall, f1, auc, log_loss_value = calculate_metrics(y_test_encoded, final_pred, final_proba, label_encoder)
             logger.info(f"{method.capitalize()} Ensemble - Accuracy: {accuracy:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, AUC: {auc:.4f}, Log Loss: {log_loss_value:.4f}")
 
             results[f"{method.capitalize()} Ensemble Predicted Labels"] = label_encoder.inverse_transform(final_pred)

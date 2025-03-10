@@ -13,16 +13,12 @@ logger = setup_logger()
 
 
 def train_model(model, X_train, y_train, X_val, y_val, model_name):
-    # 记录开始训练的日志
     logger.info(f"开始训练 {model_name} 模型...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # 将模型移到指定设备上
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
-    # 使用 Adam 优化算法，并设置 L2 正则化（weight_decay 参数）
     optimizer = optim.Adam(model.parameters(), lr=config['train']['learning_rate'], weight_decay=0.0001)
 
-    # 检查 X_train 是否为稀疏矩阵，如果是则转换为密集数组
     if hasattr(X_train, 'toarray'):
         X_train = X_train.toarray()
     if hasattr(X_val, 'toarray'):
