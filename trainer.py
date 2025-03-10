@@ -12,12 +12,21 @@ config = load_config()
 logger = setup_logger()
 
 
-def train_model(model, X_train, y_train, X_val, y_val):
+def train_model(model, X_train, y_train, X_val, y_val, model_name):
+    # 记录开始训练的日志
+    logger.info(f"开始训练 {model_name} 模型...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # 将模型移到指定设备上
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
     # 使用 Adam 优化算法，并设置 L2 正则化（weight_decay 参数）
     optimizer = optim.Adam(model.parameters(), lr=config['train']['learning_rate'], weight_decay=0.0001)
+
+    # 检查 X_train 是否为稀疏矩阵，如果是则转换为密集数组
+    if hasattr(X_train, 'toarray'):
+        X_train = X_train.toarray()
+    if hasattr(X_val, 'toarray'):
+        X_val = X_val.toarray()
 
     X_train_tensor = torch.FloatTensor(X_train).to(device)
     y_train_tensor = torch.LongTensor(y_train).to(device)
@@ -55,17 +64,19 @@ def train_model(model, X_train, y_train, X_val, y_val):
             _, val_preds = torch.max(val_outputs, 1)
             val_acc = accuracy_score(y_val_tensor.cpu().numpy(), val_preds.cpu().numpy())
 
-        logger.info(f'Epoch {epoch + 1}/{config["train"]["num_epochs"]}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}')
+        logger.info(f'{model_name} - Epoch {epoch + 1}/{config["train"]["num_epochs"]}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}')
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model_state = model.state_dict()
 
     model.load_state_dict(best_model_state)
+    logger.info(f"{model_name} 模型训练完成。")
     return model
 
 
 def train_meta_model(all_preds, y_train, input_size):
+    logger.info("开始训练元模型...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     meta_model = MetaModel(input_size).to(device)
     criterion = nn.BCELoss()
@@ -100,4 +111,5 @@ def train_meta_model(all_preds, y_train, input_size):
             best_model_state = meta_model.state_dict()
 
     meta_model.load_state_dict(best_model_state)
+    logger.info("元模型训练完成。")
     return meta_model

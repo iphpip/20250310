@@ -33,5 +33,5 @@ model_ensemble:
   fusion_method: 'hierarchical'
   dynamic_update: true
   decay_factor: 0.85
-  attack_type_column: 'attack_category'
+  attack_type_column: 'attack_cat'
   parallel_workers: 4

@@ -11,10 +11,12 @@ import os
 import pandas as pd
 import numpy as np
 from config import load_config
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 logger = setup_logger()
 config = load_config()
-
 
 logger = None  # 添加全局变量
 
@@ -23,20 +25,10 @@ def main():
     if logger is None:
         logger = setup_logger()
         
-    # 修改数据加载部分
     (X_train_processed, X_test_processed, 
      y_train_encoded, y_test_encoded, 
      label_encoder, attack_types) = load_and_preprocess_data()
     
-    # 修改模型融合调用
-    final_pred = ensemble_models(
-        all_preds,
-        y_true=y_test_encoded,
-        label_encoder=label_encoder,
-        fusion_method=config['model_ensemble']['fusion_method'],
-        attack_types=attack_types,
-        dynamic_update=config['model_ensemble']['dynamic_update']
-    )
     X_resampled, y_resampled = resample_data(X_train_processed, y_train_encoded, label_encoder)
 
     input_size = X_resampled.shape[1]
@@ -58,7 +50,14 @@ def main():
             all_probas.append(proba)
             visualize_results(y_test_encoded, pred, label_encoder, model_name)
 
-            accuracy, recall, f1, auc, log_loss_value = calculate_metrics(y_test_encoded, pred, proba, label_encoder)
+            # 修改为以字典形式接收返回值
+            metrics = calculate_metrics(y_test_encoded, pred, proba, label_encoder)
+            accuracy = metrics['accuracy']
+            recall = metrics['recall']
+            f1 = metrics['f1_score']
+            auc = metrics['auc']
+            log_loss_value = metrics['log_loss']
+
             logger.info(f"{model_name} - Accuracy: {accuracy:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, AUC: {auc:.4f}, Log Loss: {log_loss_value:.4f}")
 
     # 训练元模型
@@ -92,7 +91,14 @@ def main():
             if method != 'meta_learning':
                 final_proba = sum(all_probas) / len(all_probas)
 
-            accuracy, recall, f1, auc, log_loss_value = calculate_metrics(y_test_encoded, final_pred, final_proba, label_encoder)
+            # 修改为以字典形式接收返回值
+            metrics = calculate_metrics(y_test_encoded, final_pred, final_proba, label_encoder)
+            accuracy = metrics['accuracy']
+            recall = metrics['recall']
+            f1 = metrics['f1_score']
+            auc = metrics['auc']
+            log_loss_value = metrics['log_loss']
+
             logger.info(f"{method.capitalize()} Ensemble - Accuracy: {accuracy:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, AUC: {auc:.4f}, Log Loss: {log_loss_value:.4f}")
 
             results[f"{method.capitalize()} Ensemble Predicted Labels"] = label_encoder.inverse_transform(final_pred)
