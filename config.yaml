@@ -1,0 +1,37 @@
+# 数据集相关配置
+dataset:
+  train: "train_merged_dataset.csv"
+
+# 模型保存相关配置
+model_save_dir: "saved_models"
+
+# 日志记录相关配置
+log_dir: "log"
+log_file: "training.log"
+
+# 实验数据和结果保存相关配置
+results_dir: "results"
+
+# 可视化结果保存相关配置
+visualization_dir: "visualizations"
+
+# 训练参数配置
+train:
+  num_epochs: 10
+  batch_size: 64
+  learning_rate: 0.001
+  hidden_size1: 100
+  hidden_size2: 50
+
+# 模型选择配置
+model_choices:
+  - "NeuralNetwork"
+  - "CNN"
+  - "LSTM"
+
+model_ensemble:
+  fusion_method: 'hierarchical'
+  dynamic_update: true
+  decay_factor: 0.85
+  attack_type_column: 'attack_category'
+  parallel_workers: 4
