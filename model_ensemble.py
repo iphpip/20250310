@@ -8,14 +8,17 @@ from concurrent.futures import ThreadPoolExecutor
 from sklearn.linear_model import LogisticRegression
 import torch.nn as nn
 
-class MetaModel(nn.Module):
+# filePath: 20250310/model_ensemble.py
+class MetaModel:
     """元学习模型包装器（新增）"""
-    def __init__(self, input_size, output_size):
-        super(MetaModel, self).__init__()
-        self.fc = nn.Linear(input_size, output_size)
-
-    def forward(self, x):
-        return self.fc(x)
+    def __init__(self):
+        self.model = LogisticRegression(max_iter=1000)
+    
+    def fit(self, X, y):
+        self.model.fit(X, y)
+    
+    def predict(self, X):
+        return self.model.predict(X)
     
 def weighted_voting(all_preds, weights):
     """
