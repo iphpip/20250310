@@ -1,26 +1,29 @@
 # 数据集相关配置
 dataset:
-  train: "train_merged_dataset.csv"
+  train: "train_merged_dataset.csv" # 训练数据集的文件名，应放置在当前目录下
+  test: "test_merged_dataset.csv" # 测试数据集的文件名，应放置在当前目录下
 
 # 模型保存相关配置
-model_save_dir: "saved_models"
+model_save_dir: "saved_models" # 用于保存训练好的模型文件的主目录
 
 # 日志记录相关配置
-log_dir: "log"
-log_file: "training.log"
+log_dir: "log" # 用于保存日志文件的主目录
+log_file: "training.log" # 日志文件名
+log_name: "CyberSecurity"
+log_level: "INFO" # 日志级别，可选 "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
 
 # 实验数据和结果保存相关配置
-results_dir: "results"
+results_dir: "results"  # 用于保存实验结果的主目录
 
 # 可视化结果保存相关配置
-visualization_dir: "visualizations"
+visualization_dir: "visualizations"  # 用于保存可视化结果的主目录
 
 # 训练参数配置
 train:
-  num_epochs: 10
-  batch_size: 64
-  learning_rate: 0.001
-  hidden_size1: 100
+  num_epochs: 10  # 训练轮数
+  batch_size: 64  # 训练批次大小
+  learning_rate: 0.001  # 学习率
+  hidden_size1: 100 
   hidden_size2: 50
 
 # 模型选择配置
@@ -29,9 +32,10 @@ model_choices:
   - "CNN"
   - "LSTM"
 
+# 模型融合配置
 model_ensemble:
   fusion_method: 'hierarchical' # 融合方法，可选 'weighted_voting'、'stacking'、'bagging'、'boosting'、'hierarchical'
   dynamic_update: true # 是否动态更新权重
-  decay_factor: 0.85
-  attack_type_column: 'attack_cat'
-  parallel_workers: 4
+  decay_factor: 0.85 # 衰减因子
+  attack_type_column: 'attack_cat' # 攻击类型列名
+  parallel_workers: 4 # 并行工作进程数

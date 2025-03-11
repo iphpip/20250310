@@ -10,7 +10,8 @@ from logger_setup import setup_logger
 from config import load_config
 
 config = load_config()
-logger = setup_logger()
+fusion_method = config['model_ensemble']['fusion_method']
+logger = setup_logger(fusion_method)
 
 
 def create_preprocessor(X):

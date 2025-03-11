@@ -9,8 +9,8 @@ from model_ensemble import MetaModel
 import numpy as np
 
 config = load_config()
-logger = setup_logger()
-
+fusion_method = config['model_ensemble']['fusion_method']
+logger = setup_logger(fusion_method)
 
 def train_model(model, X_train, y_train, X_val, y_val, model_name):
     logger.info(f"开始训练 {model_name} 模型...")
@@ -72,7 +72,8 @@ def train_model(model, X_train, y_train, X_val, y_val, model_name):
 
 
 def train_meta_model(all_preds, y_train, input_size):
-    logger.info("开始训练元模型...")
+    model_name = "MetaModel"
+    logger.info(f"开始训练 {model_name} 模型...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     meta_model = MetaModel().to(device)
     criterion = nn.BCELoss()
@@ -91,6 +92,8 @@ def train_meta_model(all_preds, y_train, input_size):
     for epoch in range(config['train']['num_epochs']):
         meta_model.train()
         running_loss = 0.0
+        train_preds = []
+        train_labels = []
         for inputs, labels in train_loader:
             optimizer.zero_grad()
             outputs = meta_model(inputs)
@@ -98,14 +101,25 @@ def train_meta_model(all_preds, y_train, input_size):
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
+            train_preds.extend((outputs > 0.5).float().cpu().numpy().flatten())
+            train_labels.extend(labels.cpu().numpy().flatten())
         train_loss = running_loss / len(train_loader)
+        train_acc = accuracy_score(train_labels, train_preds)
 
-        logger.info(f'Epoch {epoch + 1}/{config["train"]["num_epochs"]}, Meta Train Loss: {train_loss:.4f}')
 
-        if train_loss < best_val_loss:
-            best_val_loss = train_loss
+        meta_model.eval()
+        with torch.no_grad():
+            val_outputs = meta_model(X_train_tensor)
+            val_loss = criterion(val_outputs, y_train_tensor).item()
+            val_preds = (val_outputs > 0.5).float().cpu().numpy().flatten()
+            val_acc = accuracy_score(y_train_tensor.cpu().numpy().flatten(), val_preds)
+
+        logger.info(f'{model_name} - Epoch {epoch + 1}/{config["train"]["num_epochs"]}, Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}')
+
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
             best_model_state = meta_model.state_dict()
 
     meta_model.load_state_dict(best_model_state)
-    logger.info("元模型训练完成。")
+    logger.info(f"{model_name} 模型训练完成。")
     return meta_model

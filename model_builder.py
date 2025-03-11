@@ -4,8 +4,8 @@ from config import load_config
 from logger_setup import setup_logger
 
 config = load_config()
-logger = setup_logger()
-
+fusion_method = config['model_ensemble']['fusion_method']
+logger = setup_logger(fusion_method)
 
 class NeuralNetwork(nn.Module):
     def __init__(self, input_size, output_size):

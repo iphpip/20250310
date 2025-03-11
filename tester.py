@@ -6,15 +6,15 @@ from model_ensemble import MetaModel
 import numpy as np
 
 config = load_config()
-logger = setup_logger()
-
+fusion_method = config['model_ensemble']['fusion_method']
+logger = setup_logger(fusion_method)
 
 def test_model(model_class, input_size, output_size, model_name, X_test):
     # 记录开始测试的日志
     logger.info(f"开始测试 {model_name} 模型...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model_class(input_size, output_size).to(device)
-    model_path = f'{config["model_save_dir"]}/{model_name}.pth'
+    model_path = f'{config["model_save_dir"]}/{fusion_method}/{fusion_method}_{model_name}.pth'
     try:
         model.load_state_dict(torch.load(model_path))
         model.eval()
